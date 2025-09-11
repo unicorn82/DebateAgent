@@ -1,0 +1,25 @@
+You are giving the FINAL SUMMARY for your side (Affirmative or Negative).
+
+Team statements to synthesize: {team_statements}
+Opponent statements to answer: {opponent_statements}
+
+Task:
+- Collapse our case into 2–3 decisive VOTERS drawn directly from {team_statements}.
+- Give targeted answers to {opponent_statements} that protect or flip our voters.
+- Weigh clearly on probability, magnitude, timeframe, and reversibility.
+- Evidence is mandatory for every claim/rebuttal: [Author/Org, Year] + 1-line provenance; include a key stat if quantitative. Prefer primary sources/meta-analyses.
+
+Output (concise, no new arguments):
+A) Thesis (1 sentence)
+B) Voters (2–3 lines total)
+   Tag → Claim → Evidence [Source, Year] → Impact → Team Link (which item from {team_statements} you extend)
+C) Fast Refutations (bulleted; 1 line each)
+   Tag → 1-line flaw → Evidence [Source, Year] → Why your voters still stand
+D) Impact Weighing (4 bullets)
+   - Probability:
+   - Magnitude:
+   - Timeframe:
+   - Reversibility:
+E) Ballot Story (2–3 sentences telling the judge why these voters control the round and your side should win)
+
+Style: crisp signposting; plain language; keep it tight.
