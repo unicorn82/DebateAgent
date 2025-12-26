@@ -5,6 +5,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from dotenv import load_dotenv
 from ConfigService import ConfigService
 from llm_service import LLMService
+from agent_service import DebateAgentService
 
 # Load environment variables
 load_dotenv()
@@ -34,7 +35,9 @@ class NegativeAgent:
         
         self.config_service = ConfigService()
         self.role = 'negative'
-        self.llm_service = LLMService(self.role)
+        self.stance = 'Negative (oppose the topic)'
+        self.llm_service = DebateAgentService(user_role=self.role)
+        self.topic_prompt_template = self.llm_service.read_prompt_template('topic_prompt_template.txt')
         self.prompt_template = self.llm_service.read_prompt_template('negative_prompt_template.txt')
         self.summary_prompt_template = self.llm_service.read_prompt_template('summarize_prompt_template.txt')
 
@@ -49,8 +52,44 @@ class NegativeAgent:
             affirmative_statements='\n'.join(affirmative_statements),
             negative_statements='\n'.join(negative_statements)
         )
+
+    def format_prompt_topic(self, topic: str) -> str:
+        """Generate prompt for team options"""
+        return self.topic_prompt_template.format(
+            topic=topic,
+            stance=self.stance,
+            role=self.role
+        )
         
+    def generate_topics_from_input(
+        self, 
+        topic: str
+    ) -> str:
+        """Generate affirmative and negative topics directly into team textboxes
+        
+        Args:
+            topic: The debate topic
+        """
+        if not topic or not topic.strip():
+            return "", "", "Enter a topic first."
+
+        # Get configuration from ConfigService
+        use_temperature = self.config_service.get_temperature() if self.config_service.get_temperature() is not None else self.default_temperature
+
+        try:
+            # Generate affirmative arguments
+            aff_topic = self.llm_service.run_workflow(
+                self.format_prompt_topic(topic),
+                system_message=self.system_prompt,
+                temperature=use_temperature
+            )
+
     
+          
+            return aff_topic
+            
+        except Exception as e:
+            raise e
 
     def generate_negative_statement(
         self, 
@@ -80,7 +119,7 @@ class NegativeAgent:
 
         try:
             # Generate negative statement
-            statement = self.llm_service.call_llm(
+            statement = self.llm_service.run_workflow(
                self.format_prompt_template(topic, neg_options, affirmative_statements, negative_statements),
                system_message=self.system_prompt,
                temperature=use_temperature
@@ -116,7 +155,7 @@ class NegativeAgent:
 
         try:
             # Generate rebuttal
-            rebuttal = self.llm_service.call_llm(
+            rebuttal = self.llm_service.run_workflow(
                 self._prompt_rebuttal(topic, opponent_argument, team_position),
                 system_message=self.system_prompt,
                 temperature=use_temperature
@@ -166,7 +205,7 @@ class NegativeAgent:
 
         try:
             # Generate closing argument
-            closing = self.llm_service.call_llm(
+            closing = self.llm_service.run_workflow(
                 closing_prompt,
                 system_message=self.system_prompt,
                 temperature=use_temperature
@@ -219,7 +258,7 @@ Provide your strategic analysis:"""
 
         try:
             # Generate analysis
-            analysis = self.llm_service.call_llm(
+            analysis = self.llm_service.run_workflow(
                 analysis_prompt,
                 system_message=self.system_prompt,
                 temperature=use_temperature

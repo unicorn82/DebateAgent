@@ -5,6 +5,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from dotenv import load_dotenv
 from ConfigService import ConfigService
 from llm_service import LLMService
+from agent_service import DebateAgentService
 
 # Load environment variables
 load_dotenv()
@@ -31,8 +32,10 @@ class AffirmativeAgent:
         self.default_temperature: float = 0.7
         self.config_service = ConfigService()
         self.role = 'affirmative'
+        self.stance = 'Affirmative (support the topic)'
         
-        self.llm_service = LLMService(self.role)
+        self.llm_service = DebateAgentService(user_role=self.role)
+        self.topic_prompt_template = self.llm_service.read_prompt_template('topic_prompt_template.txt')
         self.prompt_template = self.llm_service.read_prompt_template('affirmative_prompt_template.txt')
         self.summary_prompt_template = self.llm_service.read_prompt_template('summarize_prompt_template.txt')
     
@@ -44,24 +47,44 @@ class AffirmativeAgent:
             affirmative_statements='\n'.join(affirmative_statements),
             negative_statements='\n'.join(negative_statements)
         )
+
+    def format_prompt_topic(self, topic: str) -> str:
+        return self.topic_prompt_template.format(
+            topic=topic,
+            stance=self.stance,
+            role=self.role
+        )
     
-    # def _prompt_affirmative_statement(self, topic: str, aff_options: str, affirmative_statements: list[str], negative_statements: list[str], context: str = "") -> str:
-    #     """Generate prompt for affirmative team statement"""
-    #     user_prompt =  self.format_prompt_template(topic, aff_options, affirmative_statements, negative_statements)
-    #     try:
+    
+    def generate_topics_from_input(
+        self, 
+        topic: str
+    ) -> str:
+        """Generate affirmative and negative topics directly into team textboxes
+        
+        Args:
+            topic: The debate topic
+        """
+        if not topic or not topic.strip():
+            return "", "", "Enter a topic first."
+
+        # Get configuration from ConfigService
+        use_temperature = self.config_service.get_temperature() if self.config_service.get_temperature() is not None else self.default_temperature
+
+        try:
+            # Generate affirmative arguments
+            aff_topic = self.llm_service.run_workflow(
+                self.format_prompt_topic(topic),
+                system_message=self.system_prompt,
+                temperature=use_temperature
+            )
+
+    
             
-    #         use_temperature = self.config_service.get_temperature() if self.config_service.get_temperature() is not None else self.default_temperature
-       
-           
-    #         # Generate affirmative arguments
-    #         aff_statement = self.llm_service.call_llm(
-    #             user_prompt,
-    #             system_message=self.system_prompt,
-    #             temperature=use_temperature
-    #         )
-    #         return aff_statement
-    #     except Exception as e:
-    #         return f"Error generating affirmative statement: {e}"
+            return aff_topic
+            
+        except Exception as e:
+            raise e
 
 
 
@@ -110,7 +133,7 @@ Provide your rebuttal:"""
     
         try:
             # Generate affirmative statement - FIXED: Pass all required arguments
-            statement = self.llm_service.call_llm(
+            statement = self.llm_service.run_workflow(
                 self.format_prompt_template(topic, aff_options, affirmative_statements, negative_statements),
                 system_message=self.system_prompt,
                 temperature=use_temperature
@@ -148,7 +171,7 @@ Provide your rebuttal:"""
 
         try:
             # Generate rebuttal
-            rebuttal = self.llm_service.call_llm(
+            rebuttal = self.llm_service.run_workflow(
                 self._prompt_rebuttal(topic, opponent_argument, team_position),
                 system_message=self.system_prompt,
                 temperature=use_temperature
@@ -198,7 +221,7 @@ Provide your rebuttal:"""
         
         try:
             # Generate closing argument
-            closing = self.llm_service.call_llm(
+            closing = self.llm_service.run_workflow(
                 closing_prompt,
                 system_message=self.system_prompt,
                 temperature=use_temperature
@@ -209,3 +232,22 @@ Provide your rebuttal:"""
             
         except Exception as e:
             return "", f"Error generating closing argument: {e}"
+
+
+    def main(self):
+        topic = "Climate Change"
+        import asyncio
+        from autogen_agentchat.agents import AssistantAgent
+        from autogen_ext.models.openai import OpenAIChatCompletionClient
+
+        async def main() -> None:
+            model_client = OpenAIChatCompletionClient(model="gpt-4.1")
+            agent = AssistantAgent("assistant", model_client=model_client)
+            print(await agent.run(task="Say 'Hello World!'"))
+            await model_client.close()
+
+        asyncio.run(main())
+
+if __name__ == "__main__":
+    agent = AffirmativeAgent()
+    agent.main()

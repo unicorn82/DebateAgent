@@ -6,6 +6,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from dotenv import load_dotenv
 from ConfigService import ConfigService
 from llm_service import LLMService
+from agent_service import DebateAgentService
 
 # Load environment variables
 load_dotenv()
@@ -21,9 +22,10 @@ class RefereeAgent:
         self.default_temperature: float = 0.7
         self.config_service = ConfigService()
         self.role = 'referee'
-        self.llm_service = LLMService(self.role)
+        self.llm_service = DebateAgentService(user_role=self.role)
         self.judge_prompt_template = self.llm_service.read_prompt_template('judge_prompt_template.txt')
-        self.referee_option_prompt_template = self.llm_service.read_prompt_template('referee_option_prompt_template.txt')
+        
+    
 
     
     def format_judge_prompt_template(self, topic: str, aff_options: str, neg_options: str, affirmative_statements: list[str], negative_statements: list[str], aff_final: str, neg_final: str) -> str:
@@ -62,52 +64,6 @@ class RefereeAgent:
             return f"Error formatting prompt: {str(e)}"
     
     
-    
-    
-    def format_prompt_team_options(self, topic: str, stance: str) -> str:
-        """Generate prompt for team options"""
-        return self.referee_option_prompt_template.format(
-            topic=topic,
-            stance=stance
-        )
-            
-    
-    def generate_topics_from_input(
-        self, 
-        topic: str
-    ) -> Tuple[str, str, str]:
-        """Generate affirmative and negative topics directly into team textboxes
-        
-        Args:
-            topic: The debate topic
-        """
-        if not topic or not topic.strip():
-            return "", "", "Enter a topic first."
-
-        # Get configuration from ConfigService
-        use_temperature = self.config_service.get_temperature() if self.config_service.get_temperature() is not None else self.default_temperature
-
-        try:
-            # Generate affirmative arguments
-            aff_topic = self.llm_service.call_llm(
-                self.format_prompt_team_options(topic, "Affirmative (support the topic)"),
-                system_message=self.system_prompt,
-                temperature=use_temperature
-            )
-
-            
-            # Generate negative arguments
-            neg_topic = self.llm_service.call_llm(
-                self.format_prompt_team_options(topic, "Negative (oppose the topic)"),
-                system_message=self.system_prompt,
-                temperature=use_temperature
-            )
-            
-            status = f"Topics generated successfully)."
-            return aff_topic, neg_topic, status
-            
-        except Exception as e:
-            return "", "", f"Error generating topics: {e}"
 
     def judge_debate(
         self, 
@@ -126,7 +82,7 @@ class RefereeAgent:
 
             print("judge_prompt")
             print(judge_prompt)
-            judge_response = self.llm_service.call_llm(
+            judge_response = self.llm_service.run_workflow(
                 judge_prompt,
                 system_message=self.system_prompt,
                 temperature=use_temperature

@@ -26,3 +26,4 @@ Decision Principles (apply in order):
 3) Responsiveness (Clash): Track whether each team directly answers the opponent's major points; dropped arguments with standing warrants/evidence should be granted if extended.
 4) Impact Weighing (PMTR): Compare Probability, Magnitude, Timeframe, and Reversibility. Prefer teams that explicitly weigh and compare impacts.
 5) Consistency & Strategy: Favor internally consistent narratives and smart collapse in the final summaries; disregard new arguments first introduced in the final summaries.
+

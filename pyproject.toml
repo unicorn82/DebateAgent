@@ -1,0 +1,17 @@
+[project]
+name = "debateagent"
+version = "0.1.0"
+description = "An AI-powered debate application with multi-round arguments, automated judging."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "gradio>=4.0.0",
+    "httpx>=0.24.0",
+    "tenacity>=8.0.0",
+    "openai>=1.0.0",
+    "python-dotenv>=1.0.0",
+    "requests>=2.32.5",
+]
+
+[project.optional-dependencies]
+extras = ["tokenizers<=0.20.3,>=0.13.2"]

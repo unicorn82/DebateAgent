@@ -100,6 +100,30 @@ def on_generate_topics(topic: str):
         error_msg = f"❌ Error generating topics: {str(e)}"
         return "", "", error_msg
 
+def on_generate_affirmative_option(topic: str):
+    """Generate only affirmative team option"""
+    if not topic.strip():
+        return "⚠️ Please enter a debate topic first."
+    
+    try:
+        # Generate both but only return affirmative
+        aff_result = affirmative_agent.generate_topics_from_input(topic)
+        return aff_result
+    except Exception as e:
+        return f"❌ Error: {str(e)}"
+
+def on_generate_negative_option(topic: str):
+    """Generate only negative team option"""
+    if not topic.strip():
+        return "⚠️ Please enter a debate topic first."
+    
+    try:
+        # Generate both but only return negative
+        neg_result = negative_agent.generate_topics_from_input(topic)
+        return neg_result
+    except Exception as e:
+        return f"❌ Error: {str(e)}"
+
 def on_judge(topic: str, aff_options: str, neg_options: str,
             aff_final: str, neg_final: str, current_state: dict):
     """Judge the debate and generate results."""
@@ -254,10 +278,14 @@ with gr.Blocks(title="Debate App", theme=gr.themes.Soft()) as demo:
 
     with gr.Row():
         with gr.Column():
-            gr.Markdown("## ✅ Affirmative Team")
+            with gr.Row():
+                gr.Markdown("## ✅ Affirmative Team")
+                aff_generate_btn = gr.Button("🤖 AI Generate", variant="secondary", size="sm", scale=0)
             aff_options = gr.Textbox(lines=8, label="Affirmative Team Options (AI-generated, editable)")
         with gr.Column():
-            gr.Markdown("## ❌ Negative Team")
+            with gr.Row():
+                gr.Markdown("## ❌ Negative Team")
+                neg_generate_btn = gr.Button("🤖 AI Generate", variant="secondary", size="sm", scale=0)
             neg_options = gr.Textbox(lines=8, label="Negative Team Options (AI-generated, editable)")
 
     gr.Markdown("---")
@@ -441,6 +469,19 @@ with gr.Blocks(title="Debate App", theme=gr.themes.Soft()) as demo:
             lambda *args, p=param: config_service.update_config(**{p: args[0]}),
             inputs=component
         )
+    
+    # Add event handlers for individual team option generate buttons
+    aff_generate_btn.click(
+        on_generate_affirmative_option,
+        inputs=[topic],
+        outputs=[aff_options]
+    )
+    
+    neg_generate_btn.click(
+        on_generate_negative_option,
+        inputs=[topic],
+        outputs=[neg_options]
+    )
 
     # Set up AI generation event handlers for all buttons (MOVE INSIDE BLOCKS CONTEXT)
     def update_textbox_state(state_dict, *textbox_values):
@@ -493,9 +534,11 @@ with gr.Blocks(title="Debate App", theme=gr.themes.Soft()) as demo:
         # check textbox_id is affirmative or negative
         try: 
             if textbox_id.startswith('a'):
-                return affirmative_agent.generate_affirmative_statement(topic, aff_options , affirmative_statements, negative_statements)
+                statement, status = affirmative_agent.generate_affirmative_statement(topic, aff_options , affirmative_statements, negative_statements)
+                return statement
             else:
-                return negative_agent.generate_negative_statement(topic, neg_options, affirmative_statements, negative_statements)
+                statement, status = negative_agent.generate_negative_statement(topic, neg_options, affirmative_statements, negative_statements)
+                return statement
         except Exception as e:
             print(e)
             return "❌ Error generating content"

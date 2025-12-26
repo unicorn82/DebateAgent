@@ -1,0 +1,491 @@
+.debate-app {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  color: white;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.app-header h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.app-header p {
+  margin: 0;
+  font-size: 1.1rem;
+  opacity: 0.95;
+}
+
+/* Configuration Section */
+.config-section {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.config-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.config-item label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.95rem;
+}
+
+.config-item input[type="range"] {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #dee2e6;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.config-item input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #667eea;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.config-item input[type="range"]::-webkit-slider-thumb:hover {
+  background: #764ba2;
+  transform: scale(1.1);
+}
+
+.config-item select {
+  padding: 0.6rem 1rem;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.config-item select:hover {
+  border-color: #667eea;
+}
+
+.config-item select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Status Message */
+.status-message {
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  border-radius: 8px;
+  background: #e7f3ff;
+  border-left: 4px solid #2196F3;
+  color: #0d47a1;
+  font-weight: 500;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Topic Section */
+.topic-section {
+  margin-bottom: 1.5rem;
+}
+
+.topic-section label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #495057;
+  font-size: 1.1rem;
+}
+
+.topic-section textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.2s;
+}
+
+.topic-section textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Action Section */
+.action-section {
+  text-align: center;
+  margin: 2rem 0;
+}
+
+/* Buttons */
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+}
+
+.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+.btn-large {
+  padding: 1rem 2rem;
+  font-size: 1.2rem;
+}
+
+/* Team Options */
+.team-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.team-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.team-column.affirmative {
+  border-left: 4px solid #4caf50;
+}
+
+.team-column.negative {
+  border-left: 4px solid #f44336;
+}
+
+.team-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.team-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #212529;
+}
+
+.team-column textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.2s;
+}
+
+.team-column textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.team-column.affirmative textarea:focus {
+  border-color: #4caf50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.team-column.negative textarea:focus {
+  border-color: #f44336;
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+}
+
+/* Rounds */
+.round-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 2px solid #e9ecef;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.round-section h3 {
+  margin: 0 0 1rem 0;
+  color: #495057;
+  font-size: 1.4rem;
+}
+
+.round-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.member-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Final Section */
+.final-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: #fff8e1;
+  border-radius: 12px;
+  border: 2px solid #ffd54f;
+}
+
+.final-section h3 {
+  margin: 0 0 1rem 0;
+  color: #f57f17;
+  font-size: 1.4rem;
+}
+
+.final-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+/* Judge Results */
+.judge-results {
+  margin-top: 2rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(253, 203, 110, 0.3);
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.judge-results h3 {
+  margin: 0 0 1.5rem 0;
+  text-align: center;
+  font-size: 1.8rem;
+  color: #d35400;
+}
+
+.winner-display {
+  text-align: center;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.trophy-icon {
+  font-size: 4rem;
+  color: #f39c12;
+  margin-bottom: 1rem;
+  animation: bounce 1s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.winner-display h2 {
+  margin: 0;
+  font-size: 2rem;
+  color: #2c3e50;
+}
+
+.scores-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.score-box {
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.score-box.affirmative {
+  border-top: 4px solid #4caf50;
+}
+
+.score-box.negative {
+  border-top: 4px solid #f44336;
+}
+
+.score-box h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: #495057;
+}
+
+.score-box .score {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.reasoning-section {
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.reasoning-section h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+  color: #495057;
+}
+
+.reasoning-section p {
+  margin: 0;
+  line-height: 1.6;
+  color: #6c757d;
+  font-size: 1rem;
+}
+
+/* Horizontal Rule */
+hr {
+  border: none;
+  border-top: 2px solid #e9ecef;
+  margin: 2rem 0;
+}
+
+/* Spinner Animation */
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 968px) {
+  .team-options,
+  .round-content,
+  .final-content,
+  .scores-section {
+    grid-template-columns: 1fr;
+  }
+
+  .config-section {
+    flex-direction: column;
+  }
+
+  .app-header h1 {
+    font-size: 2rem;
+  }
+
+  .app-header p {
+    font-size: 1rem;
+  }
+}

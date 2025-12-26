@@ -1,0 +1,9 @@
+
+Topic: {topic}
+Stance: {stance}
+Role: {role}
+Task: Generate one and only one statement to summarize the topic and support the stance. The statement should be concise and to the point.
+No need to do any web search. According your knowledge and understanding about topic, generate the statement. 
+The statement should be in the first person. The statement should be in the present tense.
+The statement should not contain any personal opinion or bias. 
+The statement should not contain any emotional language.
