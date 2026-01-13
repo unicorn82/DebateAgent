@@ -13,6 +13,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from google import genai
 from google.genai import types
 from ConfigService import ConfigService
+from DatabaseService import DatabaseService
 
 
 import os
@@ -43,6 +44,8 @@ class GraphState(TypedDict):
     decision_reasoning: str
     search_query: str
     role: str
+    search_count: int
+    needs_more_search: bool
 
 
 
@@ -103,14 +106,19 @@ class OpenAIAdapter:
         return self.llm.invoke(messages)
 
 class DebateAgentService:
-    def __init__(self, user_role: str):
+    def __init__(self, user_role: str, provider_id: Optional[int] = None, token_id: Optional[str] = None):
         self.config_service = ConfigService()
-        provider_id = self.config_service.get_role_provider(user_role)
-        print("find provider id: ", provider_id)
-        self.provider = self.config_service.get_provider(provider_id)["provider"]
-        self.model_name = self.config_service.get_provider(provider_id)["model"]
-        self.api_key = self.config_service.get_provider(provider_id)["api_key"]
-        print("find api key: ", self.api_key)
+        self.db = DatabaseService()
+        self.token_id = token_id
+        
+        if provider_id is None:
+            provider_id = self.config_service.get_role_provider(user_role)
+        
+        print(f"Using provider id: {provider_id} for role: {user_role}")
+        provider_data = self.config_service.get_provider(provider_id)
+        self.provider = provider_data["provider"]
+        self.model_name = provider_data["model"]
+        self.api_key = provider_data["api_key"]
         self.user_role = user_role
         self.temperature = 0.7  # Default temperature
         self.llm = self._create_llm(self.temperature)
@@ -230,9 +238,78 @@ class DebateAgentService:
             search_results = f"Error during search: {str(e)}"
             print(f"\n❌ Search error: {e}")
         
+        # Accumulate results if they already exist
+        current_results = state.get("search_results", "")
+        if current_results and current_results != "No search results found." and not current_results.startswith("Error"):
+            combined_results = current_results + "\n\n--- Additional Search Results ---\n\n" + search_results
+        else:
+            combined_results = search_results
+
         return {
             **state,
-            "search_results": search_results
+            "search_results": combined_results
+        }
+
+    def review_search_node(self, state: GraphState) -> GraphState:
+        """
+        Node: Review search results and decide if more search is needed.
+        """
+        print("\n" + "="*80)
+        print("NODE: REVIEW SEARCH - Determining if more search is needed...")
+        print("="*80)
+        
+        # Limit iterations to 3 to avoid infinite loops
+        search_count = state.get("search_count", 0)
+        if search_count >= 3:
+            print("⚠️ Maximum search iterations reached. Proceeding to summary.")
+            return {**state, "needs_more_search": False}
+
+        review_prompt = f"""Review the current search results and determine if they sufficiently support the {state['role']} position for the given prompt.
+        
+        Prompt: {state['prompt']}
+        Role: {state['role']}
+        
+        Current Search Results:
+        {state['search_results']}
+        
+        If the results are insufficient, missing key evidence, or if there are specific claims that need more verification, suggest a NEW specific search query.
+        
+        Respond with ONLY a JSON object in this format:
+        {{
+            "needs_more_search": true/false,
+            "new_search_query": "The specific query to search for (if needed, otherwise empty string)",
+            "reasoning": "Brief explanation of your decision"
+        }}"""
+        
+        response = self.llm.invoke([HumanMessage(content=review_prompt)])
+        
+        import json
+        try:
+            content = response.content.strip()
+            if content.startswith("```json"): content = content[7:]
+            if content.startswith("```"): content = content[3:]
+            if content.endswith("```"): content = content[:-3]
+            content = content.strip()
+            
+            review_data = json.loads(content)
+            needs_more_search = review_data.get("needs_more_search", False)
+            new_query = review_data.get("new_search_query", "")
+            reasoning = review_data.get("reasoning", "No reasoning provided")
+        except:
+            needs_more_search = False
+            new_query = ""
+            reasoning = "Failed to parse review decision"
+            
+        print(f"\n🤔 Needs more search: {'YES' if needs_more_search else 'NO'}")
+        if needs_more_search:
+            print(f" New Query: {new_query}")
+        print(f"📝 Reasoning: {reasoning}")
+        
+        return {
+            **state,
+            "needs_more_search": needs_more_search,
+            "search_query": new_query,
+            "search_count": search_count + 1
         }
 
 
@@ -352,6 +429,14 @@ class DebateAgentService:
         else:
             return "skip_search"
 
+    def route_after_review(self, state: GraphState) -> Literal["search", "summarize"]:
+        """
+        Routes back to search if more info is needed, otherwise to summarize.
+        """
+        if state.get("needs_more_search", False):
+            return "search"
+        return "summarize"
+
     # ============================================================================
     # STEP 4: Build the Graph
     # ============================================================================
@@ -366,6 +451,7 @@ class DebateAgentService:
         # Add nodes
         workflow.add_node("decision", self.decision_node)
         workflow.add_node("search", self.search_node)
+        workflow.add_node("review_search", self.review_search_node)
         workflow.add_node("summarize", self.summarize_node)
         workflow.add_node("skip_search", self.skip_search_node)
         workflow.add_node("generate", self.generate_statement_node)
@@ -384,7 +470,17 @@ class DebateAgentService:
         )
         
         # Add edges for search path
-        workflow.add_edge("search", "summarize")
+        workflow.add_edge("search", "review_search")
+        
+        workflow.add_conditional_edges(
+            "review_search",
+            self.route_after_review,
+            {
+                "search": "search",
+                "summarize": "summarize"
+            }
+        )
+        
         workflow.add_edge("summarize", "generate")
         
         # Add edge for skip path
@@ -423,7 +519,9 @@ class DebateAgentService:
             "search_results": "",
             "summary": "",
             "final_statement": "",
-            "decision_reasoning": ""
+            "decision_reasoning": "",
+            "search_count": 0,
+            "needs_more_search": False
         }
         
         print("\n" + "🚀" + "="*78 + "🚀")
@@ -449,7 +547,11 @@ class DebateAgentService:
         print(f"\n✨ FINAL STATEMENT:\n{result['final_statement']}")
         print("\n" + "="*80 + "\n")
         
-        return result['final_statement']
+        request_count = None
+        if self.token_id:
+            request_count = self.db.decrement_request_count(self.token_id)
+            
+        return result['final_statement'], request_count
 
     def read_prompt_template(self, filename: str) -> str:
         # Get the directory where this script is located

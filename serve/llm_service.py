@@ -4,6 +4,7 @@ import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
 from dotenv import load_dotenv
 from openai import OpenAI
+from DatabaseService import DatabaseService
 
 # Chains
 
@@ -16,7 +17,7 @@ load_dotenv()
 class LLMService:
     """Service for calling OpenAI and other LLM providers"""
     
-    def __init__(self, role:str):
+    def __init__(self, role:str, token_id: Optional[str] = None):
        
         self.default_timeout = 60
         #convert role to uppercase
@@ -25,6 +26,8 @@ class LLMService:
         self.model = os.getenv(self.role + '_MODEL')
         self.provider = os.getenv(self.role + '_PROVIDER')
         self.api_key = os.getenv(self.role + '_API_KEY')
+        self.token_id = token_id
+        self.db = DatabaseService()
 
         print("role=" + self.role)
 
@@ -49,6 +52,9 @@ class LLMService:
             {"messages": [{"role": "user", "content": prompt}]},
             context={"user_role": "expert"}
         )
+
+        if self.token_id:
+            self.db.decrement_request_count(self.token_id)
 
         return result
         
@@ -93,6 +99,9 @@ class LLMService:
 
         chat = self._make_chat_model(temperature=temperature)
         result = chat.invoke(messages)
+
+        if self.token_id:
+            self.db.decrement_request_count(self.token_id)
 
         print(result.content)
         return result.content

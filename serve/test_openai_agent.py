@@ -60,10 +60,11 @@ def test_openai_agent():
     print(f"\nRunning workflow with prompt: '{prompt}'")
     
     try:
-        result = agent.run_workflow(prompt)
+        result, request_count = agent.run_workflow(prompt)
         print("\n" + "="*30)
         print("Workflow Result:")
         print(result)
+        print(f"Remaining Requests: {request_count}")
         print("="*30)
         print("\nTest Passed!")
     except Exception as e:

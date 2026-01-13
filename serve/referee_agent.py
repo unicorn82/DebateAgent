@@ -73,22 +73,25 @@ class RefereeAgent:
         affirmative_statements: list[str],
         negative_statements: list[str],
         aff_final: str,
-        neg_final: str
-    ) -> str:
+        neg_final: str,
+        provider_id: Optional[int] = None,
+        token_id: Optional[str] = None
+    ) -> Tuple[str, Optional[int]]:
         """Judge the debate and return the result"""
         try:
             use_temperature = self.config_service.get_temperature() if self.config_service.get_temperature() is not None else self.default_temperature
             judge_prompt = self.format_judge_prompt_template(topic, aff_options, neg_options, affirmative_statements, negative_statements, aff_final, neg_final)
-
+            
             print("judge_prompt")
             print(judge_prompt)
-            judge_response = self.llm_service.run_workflow(
+            llm_service = DebateAgentService(user_role=self.role, provider_id=provider_id, token_id=token_id)
+            judge_response, request_count = llm_service.run_workflow(
                 judge_prompt,
                 system_message=self.system_prompt,
                 temperature=use_temperature
             )
             print(judge_response)
-            return judge_response
+            return judge_response, request_count
             
         except Exception as e:
             # Return a properly formatted JSON error response
@@ -98,7 +101,7 @@ class RefereeAgent:
                 "affirmative_score": 0,
                 "negative_score": 0
             }
-            return json.dumps(error_response)
+            return json.dumps(error_response), None
     
     def parse_judge_response(self, judge_response: str) -> dict:
         """Parse the judge response into a JSON object"""

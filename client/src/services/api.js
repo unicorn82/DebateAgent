@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // API base URL - can be configured via environment variable
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:9000';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -10,6 +10,26 @@ const api = axios.create({
   },
 });
 
+// Auth token management
+let authToken = null;
+
+export const setAuthToken = (token) => {
+  authToken = token;
+};
+
+// Request interceptor to add Authorization header
+api.interceptors.request.use(
+  (config) => {
+    if (authToken) {
+      config.headers['Authorization'] = `Bearer ${authToken}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // Topic Generation APIs
 export const generateTopics = async (topic) => {
   const response = await api.post('/api/topics/generate', { topic });
@@ -17,13 +37,13 @@ export const generateTopics = async (topic) => {
   return response.data;
 };
 
-export const generateAffirmativeOption = async (topic) => {
-  const response = await api.post('/api/topics/affirmative', { topic });
+export const generateAffirmativeOption = async (topic, providerId = null) => {
+  const response = await api.post('/api/topics/affirmative', { topic, provider_id: providerId });
   return response.data;
 };
 
-export const generateNegativeOption = async (topic) => {
-  const response = await api.post('/api/topics/negative', { topic });
+export const generateNegativeOption = async (topic, providerId = null) => {
+  const response = await api.post('/api/topics/negative', { topic, provider_id: providerId });
   return response.data  ;
 };
 
@@ -76,9 +96,19 @@ export const setTemperature = async (temperature) => {
   return response.data;
 };
 
+export const getProviders = async () => {
+  const response = await api.get('/api/config/providers');
+  return response.data;
+};
+
 // Health check
 export const checkHealth = async () => {
   const response = await api.get('/health');
+  return response.data;
+};
+
+export const getTokenInfo = async () => {
+  const response = await api.get('/api/token/info');
   return response.data;
 };
 

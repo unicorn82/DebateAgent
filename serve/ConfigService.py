@@ -1,6 +1,11 @@
 import os
-from typing import Optional
+import json
+from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 @dataclass
 class DebateConfig:
@@ -55,7 +60,6 @@ class ConfigService:
                 "model": model,
                 "api_key": api_key
             }
-            print("find api key: "+str(i)+" "+api_key)
             i += 1
         
     
@@ -105,10 +109,16 @@ class ConfigService:
     def get_role_provider(self, role: str) -> int:
         return self.role_provider.get(role)
 
-    def list_providers(self) -> str:
-        providers = []
-        for provider in self.providers:
-            #return provide name and model only in json format
-            providers.append({"provider": provider["provider"], "model": provider["model"]})
-        return json.dumps(providers)
+    def list_providers(self) -> List[Dict[str, Any]]:
+        """List all available providers and models sorted by index"""
+        sorted_indices = sorted(self.providers.keys())
+        result = []
+        for idx in sorted_indices:
+            provider_data = self.providers[idx]
+            result.append({
+                "id": idx,
+                "provider": provider_data["provider"],
+                "model": provider_data["model"]
+            })
+        return result
     

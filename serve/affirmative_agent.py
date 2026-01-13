@@ -58,8 +58,10 @@ class AffirmativeAgent:
     
     def generate_topics_from_input(
         self, 
-        topic: str
-    ) -> str:
+        topic: str,
+        provider_id: Optional[int] = None,
+        token_id: Optional[str] = None
+    ) -> Tuple[str, Optional[int]]:
         """Generate affirmative and negative topics directly into team textboxes
         
         Args:
@@ -73,7 +75,8 @@ class AffirmativeAgent:
 
         try:
             # Generate affirmative arguments
-            aff_topic = self.llm_service.run_workflow(
+            llm_service = DebateAgentService(user_role=self.role, provider_id=provider_id, token_id=token_id)
+            aff_topic, request_count = llm_service.run_workflow(
                 self.format_prompt_topic(topic),
                 system_message=self.system_prompt,
                 temperature=use_temperature
@@ -81,7 +84,7 @@ class AffirmativeAgent:
 
     
             
-            return aff_topic
+            return aff_topic, request_count
             
         except Exception as e:
             raise e
@@ -111,8 +114,10 @@ Provide your rebuttal:"""
         aff_options: str,
         affirmative_statements: list[str],
         negative_statements: list[str],
-        context: str = ""
-    ) -> Tuple[str, str]:
+        context: str = "",
+        provider_id: Optional[int] = None,
+        token_id: Optional[str] = None
+    ) -> Tuple[str, str, Optional[int]]:
         """Generate an affirmative team statement
         
         Args:
@@ -133,17 +138,18 @@ Provide your rebuttal:"""
     
         try:
             # Generate affirmative statement - FIXED: Pass all required arguments
-            statement = self.llm_service.run_workflow(
+            llm_service = DebateAgentService(user_role=self.role, provider_id=provider_id, token_id=token_id)
+            statement, request_count = llm_service.run_workflow(
                 self.format_prompt_template(topic, aff_options, affirmative_statements, negative_statements),
                 system_message=self.system_prompt,
                 temperature=use_temperature
             )
             
             status = "Affirmative statement generated successfully."
-            return statement, status
+            return statement, status, request_count
             
         except Exception as e:
-            return "", f"Error generating affirmative statement: {e}"
+            return "", f"Error generating affirmative statement: {e}", None
 
     
 
@@ -151,8 +157,9 @@ Provide your rebuttal:"""
         self,
         topic: str,
         opponent_argument: str,
-        team_position: str
-    ) -> Tuple[str, str]:
+        team_position: str,
+        token_id: Optional[str] = None
+    ) -> Tuple[str, str, Optional[int]]:
         """Generate a rebuttal against the negative team
         
         Args:
@@ -171,17 +178,18 @@ Provide your rebuttal:"""
 
         try:
             # Generate rebuttal
-            rebuttal = self.llm_service.run_workflow(
+            llm_service = DebateAgentService(user_role=self.role, token_id=token_id)
+            rebuttal, request_count = llm_service.run_workflow(
                 self._prompt_rebuttal(topic, opponent_argument, team_position),
                 system_message=self.system_prompt,
                 temperature=use_temperature
             )
             
             status = "Rebuttal generated successfully."
-            return rebuttal, status
+            return rebuttal, status, request_count
             
         except Exception as e:
-            return "", f"Error generating rebuttal: {e}"
+            return "", f"Error generating rebuttal: {e}", None
 
     def format_summary_prompt_template(self, topic: str, team_option: str, team_statements: list[str], opponent_statements: list[str]) -> str:
         return self.summary_prompt_template.format(
@@ -197,8 +205,10 @@ Provide your rebuttal:"""
         aff_options: str,
         neg_options: str,
         team_statements: list[str],
-        opponent_statements: list[str]
-    ) -> Tuple[str, str]:
+        opponent_statements: list[str],
+        provider_id: Optional[int] = None,
+        token_id: Optional[str] = None
+    ) -> Tuple[str, str, Optional[int]]:
         """Generate a closing argument for the affirmative team
         
         Args:
@@ -221,17 +231,18 @@ Provide your rebuttal:"""
         
         try:
             # Generate closing argument
-            closing = self.llm_service.run_workflow(
+            llm_service = DebateAgentService(user_role=self.role, provider_id=provider_id, token_id=token_id)
+            closing, request_count = llm_service.run_workflow(
                 closing_prompt,
                 system_message=self.system_prompt,
                 temperature=use_temperature
             )
             
             status = "Closing argument generated successfully."
-            return closing, status
+            return closing, status, request_count
             
         except Exception as e:
-            return "", f"Error generating closing argument: {e}"
+            return "", f"Error generating closing argument: {e}", None
 
 
     def main(self):
